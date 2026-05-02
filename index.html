@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 게시판</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 40px auto;
+      padding: 24px;
+    }
+
+    .board {
+      position: relative;
+      background: #fff;
+      border: 1px solid #e5e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 20px rgba(18, 30, 66, 0.06);
+    }
+
+    .admin-login-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: #ff8a00;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .admin-login-btn:hover {
+      background: #e57b00;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 26px;
+      padding-right: 130px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #394053;
+    }
+
+    input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #d6dceb;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      color: #222;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #4a77ff;
+      box-shadow: 0 0 0 3px rgba(74, 119, 255, 0.13);
+    }
+
+    .form-help {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #6a7285;
+    }
+
+    .btn-submit {
+      width: 100%;
+      margin-top: 4px;
+      padding: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #4a77ff;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-submit:hover {
+      background: #355ee0;
+    }
+
+    .divider {
+      margin: 22px 0 16px;
+      border: 0;
+      border-top: 1px solid #eceff5;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 20px;
+    }
+
+    .empty {
+      margin: 0;
+      color: #6a7285;
+      font-size: 14px;
+    }
+
+    .post-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .post-item {
+      border: 1px solid #e5e8f0;
+      border-radius: 10px;
+      padding: 14px;
+      background: #fcfdff;
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .post-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      word-break: break-word;
+    }
+
+    .btn-delete {
+      border: 0;
+      border-radius: 6px;
+      padding: 6px 10px;
+      background: #eef2ff;
+      color: #3053be;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s ease;
+    }
+
+    .btn-delete:hover {
+      background: #dfe7ff;
+    }
+
+    .post-content {
+      margin: 0;
+      font-size: 14px;
+      color: #2d3345;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .post-meta {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #2d3345;
+    }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .photo-grid img {
+      width: 100%;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e5e8f0;
+    }
+
+    .locked-text {
+      margin: 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fff4e6;
+      color: #8a4e00;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status-text {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #6a7285;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="board">
+      <button id="adminLoginBtn" type="button" class="admin-login-btn">관리자 로그인</button>
+      <h1>학생 게시판</h1>
+      <p id="adminStatusText" class="status-text">현재 상태: 일반 사용자 (목록 읽기 잠금)</p>
+
+      <form id="postForm">
+        <div class="form-row">
+          <label for="nameInput">이름</label>
+          <input id="nameInput" type="text" placeholder="이름을 입력하세요" maxlength="20" required />
+        </div>
+
+        <div class="form-row">
+          <label for="schoolInput">학교</label>
+          <input id="schoolInput" type="text" placeholder="학교 이름을 입력하세요" maxlength="40" required />
+        </div>
+
+        <div class="form-row">
+          <label for="gradeInput">학년</label>
+          <input id="gradeInput" type="text" placeholder="예: 1학년" maxlength="10" required />
+        </div>
+
+        <div class="form-row">
+          <label for="phonePinInput">암호 (휴대폰 끝번호 4자리)</label>
+          <input id="phonePinInput" type="text" placeholder="숫자 4자리를 입력하세요" maxlength="4" inputmode="numeric" pattern="[0-9]{4}" required />
+          <p class="form-help">예: 1234 (숫자 4자리만 입력)</p>
+        </div>
+
+        <div class="form-row">
+          <label for="photoInput">사진 업로드 (최대 5장)</label>
+          <input id="photoInput" type="file" accept="image/*" multiple />
+        </div>
+
+        <button type="submit" class="btn-submit">등록하기</button>
+      </form>
+
+      <hr class="divider" />
+
+      <h2>게시글 목록</h2>
+      <p id="emptyText" class="empty">아직 등록된 게시글이 없습니다.</p>
+      <ul id="postList" class="post-list"></ul>
+    </section>
+  </div>
+
+  <script>
+    const postForm = document.getElementById("postForm");
+    const nameInput = document.getElementById("nameInput");
+    const schoolInput = document.getElementById("schoolInput");
+    const gradeInput = document.getElementById("gradeInput");
+    const phonePinInput = document.getElementById("phonePinInput");
+    const photoInput = document.getElementById("photoInput");
+    const postList = document.getElementById("postList");
+    const emptyText = document.getElementById("emptyText");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
+    const adminStatusText = document.getElementById("adminStatusText");
+
+    const STORAGE_KEY = "simple-board-posts";
+    const ADMIN_PASSWORD = "a1111";
+    const posts = [];
+    let isAdmin = false;
+
+    function savePosts() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    }
+
+    function loadPosts() {
+      const savedPosts = localStorage.getItem(STORAGE_KEY);
+
+      if (!savedPosts) {
+        return;
+      }
+
+      try {
+        const parsedPosts = JSON.parse(savedPosts);
+
+        if (Array.isArray(parsedPosts)) {
+          posts.push(...parsedPosts);
+        }
+      } catch (error) {
+        console.error("저장된 게시글을 불러오는 중 오류가 발생했습니다.", error);
+      }
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("파일을 읽는 중 오류가 발생했습니다."));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function updateEmptyState() {
+      emptyText.style.display = posts.length === 0 ? "block" : "none";
+    }
+
+    function updateAdminStatus() {
+      if (isAdmin) {
+        adminStatusText.textContent = "현재 상태: 관리자 로그인됨 (목록 읽기 가능)";
+        adminLoginBtn.textContent = "관리자 로그아웃";
+      } else {
+        adminStatusText.textContent = "현재 상태: 일반 사용자 (목록 읽기 잠금)";
+        adminLoginBtn.textContent = "관리자 로그인";
+      }
+    }
+
+    function renderPosts() {
+      postList.innerHTML = "";
+
+      posts.forEach((post, index) => {
+        const item = document.createElement("li");
+        item.className = "post-item";
+
+        const header = document.createElement("div");
+        header.className = "post-header";
+
+        const title = document.createElement("h3");
+        title.className = "post-title";
+        title.textContent = isAdmin ? post.name + " / " + post.school : "비공개 게시글";
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "btn-delete";
+        deleteButton.type = "button";
+        deleteButton.textContent = "삭제";
+        deleteButton.addEventListener("click", () => {
+          posts.splice(index, 1);
+          savePosts();
+          renderPosts();
+        });
+
+        header.appendChild(title);
+        if (isAdmin) {
+          header.appendChild(deleteButton);
+        }
+        item.appendChild(header);
+
+        if (isAdmin) {
+          const meta = document.createElement("p");
+          meta.className = "post-meta";
+          meta.textContent = "학년: " + post.grade + " | 암호(휴대폰 끝 4자리): " + post.phonePin;
+          item.appendChild(meta);
+
+          if (post.photos.length > 0) {
+            const photoGrid = document.createElement("div");
+            photoGrid.className = "photo-grid";
+
+            post.photos.forEach((photoUrl) => {
+              const image = document.createElement("img");
+              image.src = photoUrl;
+              image.alt = post.name + "의 사진";
+              photoGrid.appendChild(image);
+            });
+
+            item.appendChild(photoGrid);
+          }
+        } else {
+          const lockedText = document.createElement("p");
+          lockedText.className = "locked-text";
+          lockedText.textContent = "관리자만 게시글 내용을 읽을 수 있습니다.";
+          item.appendChild(lockedText);
+        }
+
+        postList.appendChild(item);
+      });
+
+      updateEmptyState();
+    }
+
+    postForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const name = nameInput.value.trim();
+      const school = schoolInput.value.trim();
+      const grade = gradeInput.value.trim();
+      const phonePin = phonePinInput.value.trim();
+      const selectedFiles = Array.from(photoInput.files);
+
+      if (!name || !school || !grade || !phonePin) {
+        return;
+      }
+
+      if (!/^\d{4}$/.test(phonePin)) {
+        alert("암호는 휴대폰 끝번호 숫자 4자리로 입력해주세요.");
+        phonePinInput.focus();
+        return;
+      }
+
+      if (selectedFiles.length > 5) {
+        alert("사진은 최대 5장까지만 올릴 수 있습니다.");
+        return;
+      }
+
+      let photos = [];
+
+      try {
+        photos = await Promise.all(selectedFiles.map(readFileAsDataUrl));
+      } catch (error) {
+        alert("사진 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      posts.unshift({ name, school, grade, phonePin, photos });
+      savePosts();
+      postForm.reset();
+      nameInput.focus();
+      renderPosts();
+    });
+
+    adminLoginBtn.addEventListener("click", () => {
+      if (isAdmin) {
+        isAdmin = false;
+        updateAdminStatus();
+        renderPosts();
+        return;
+      }
+
+      const password = prompt("관리자 비밀번호를 입력하세요.");
+
+      if (password === ADMIN_PASSWORD) {
+        isAdmin = true;
+        updateAdminStatus();
+        renderPosts();
+      } else if (password !== null) {
+        alert("비밀번호가 틀렸습니다.");
+      }
+    });
+
+    loadPosts();
+    updateAdminStatus();
+    renderPosts();
+  </script>
+</body>
+</html>
